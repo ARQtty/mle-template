@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "mle-template"
+version = "0.1.0"
+description = ""
+authors = ["ARQtty <ShamovIA@yandex.ru>"]
+readme = "README.md"
+packages = [{include = "mle_template"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+yamlparams = "^1.0.7"
+sklearn = "^0.0.post4"
+pandas = "^2.0.0"
+loguru = "^0.7.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.3.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
