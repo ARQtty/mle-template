@@ -9,9 +9,10 @@ packages = [{include = "mle_template"}]
 [tool.poetry.dependencies]
 python = "^3.9"
 yamlparams = "^1.0.7"
-sklearn = "^0.0.post4"
 pandas = "^2.0.0"
 loguru = "^0.7.0"
+scikit-learn = "^1.2.2"
+pytest = "^7.3.1"
 
 
 [tool.poetry.group.dev.dependencies]
