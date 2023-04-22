@@ -5,7 +5,7 @@ from src.bikes_regression import LinregModel
 
 
 def test_valid_save():
-    root = Path('..')
+    root = Path('.')
     cfg = Hparam(root / 'config.yaml')
     model = LinregModel()
     model.load(root / cfg.model.path)

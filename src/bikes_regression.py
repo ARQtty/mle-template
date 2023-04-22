@@ -65,7 +65,7 @@ class LinregModel:
 
 
 if __name__ == '__main__':
-    root = Path('..')
+    root = Path('.')
     cfg = Hparam(root / 'config.yaml')
 
     data = load_data(root / cfg.data.path)
