@@ -1,9 +1,39 @@
-version: '3.8'
+version: '3.1'
 services:
+  db:
+    image: postgres:14.5
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    env_file:
+      - docker.env
+
+  init_db:
+    depends_on:
+      - db
+    build: .
+    command: bash -c "python3 src/00-dataset_to_db.py"
+    image: 54367888/mle-template:latest
+    env_file:
+      - docker.env
+    links:
+      - "db:database"
+
   fit_predict:
+    depends_on:
+      - init_db
     build: .
     command: bash -c "python3 src/bikes_regression.py"
     image: 54367888/mle-template:latest
+    env_file:
+      - docker.env
+    links:
+      - "db:database"
+
   tests:
     build: .
     command: bash -c "python3 -m pytest tests/test_model_quality.py"
