@@ -1,16 +1,23 @@
 from pathlib import Path
+import os
 import pandas as pd
 import pickle
 from loguru import logger
+from sqlalchemy import create_engine
 from yamlparams import Hparam
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
 
 
-def load_data(path: Path) -> pd.DataFrame:
-    df = pd.read_csv(path)
-    logger.info(df.shape)
+def load_data(table: str) -> pd.DataFrame:
+    user = os.getenv('POSTGRES_USER')
+    password = os.getenv('POSTGRES_PASSWORD')
+    db = os.getenv('POSTGRES_DB')
+    engine = create_engine(f'postgresql://{user}:{password}@database:5432/{db}')
+
+    df = pd.read_sql_query(f'select * from {table}', con=engine)
+    logger.debug(df.shape)
     return df
 
 
@@ -68,7 +75,7 @@ if __name__ == '__main__':
     root = Path('.')
     cfg = Hparam(root / 'config.yaml')
 
-    data = load_data(root / cfg.data.path)
+    data = load_data(cfg.data.table)
     train, test = preprocess(data)
 
     model = LinregModel()
