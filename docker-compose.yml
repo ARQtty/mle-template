@@ -1,5 +1,15 @@
 version: '3.1'
 services:
+  vault:
+    image: vault:latest
+    ports:
+      - "8200:8200"
+    volumes:
+      - ./vault:/vault/
+    cap_add:
+      - IPC_LOCK
+    entrypoint: vault server -config=vault/vault.json
+
   db:
     image: postgres:14.5
     ports:
@@ -15,13 +25,17 @@ services:
   init_db:
     depends_on:
       - db
+      - vault
     build: .
     command: bash -c "python3 src/00-dataset_to_db.py"
     image: 54367888/mle-template:latest
+    volumes:
+      - ./vault:/app/vault/
     env_file:
       - docker.env
     links:
       - "db:database"
+      - "vault:vault"
 
   fit_predict:
     depends_on:
@@ -29,10 +43,13 @@ services:
     build: .
     command: bash -c "python3 src/bikes_regression.py"
     image: 54367888/mle-template:latest
+    volumes:
+      - ./vault:/app/vault/
     env_file:
       - docker.env
     links:
       - "db:database"
+      - "vault:vault"
 
   tests:
     build: .

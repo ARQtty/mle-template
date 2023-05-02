@@ -1,5 +1,4 @@
 from pathlib import Path
-import os
 import pandas as pd
 import pickle
 from loguru import logger
@@ -8,12 +7,16 @@ from yamlparams import Hparam
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
+import vault_cli
 
 
 def load_data(table: str) -> pd.DataFrame:
-    user = os.getenv('POSTGRES_USER')
-    password = os.getenv('POSTGRES_PASSWORD')
-    db = os.getenv('POSTGRES_DB')
+    vault = vault_cli.client.get_client(token=open('vault/token-file.txt').read(), url='http://vault:8200')
+    secrets = vault.get_secrets(path='cubbyhole/db')['cubbyhole/db']
+
+    user = secrets['pg_user']
+    password = secrets['pg_password']
+    db = secrets['pg_db']
     engine = create_engine(f'postgresql://{user}:{password}@database:5432/{db}')
 
     df = pd.read_sql_query(f'select * from {table}', con=engine)
