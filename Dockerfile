@@ -9,3 +9,4 @@ ADD ./src/ ./src/
 ADD ./tests/ ./tests/
 ADD ./config.yaml ./
 ADD ./data ./data
+ADD kafka_2.13-3.4.0 ./

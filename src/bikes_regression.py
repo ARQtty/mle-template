@@ -1,9 +1,11 @@
+import os
 from pathlib import Path
 import pandas as pd
 import pickle
 from loguru import logger
 from sqlalchemy import create_engine
 from yamlparams import Hparam
+from confluent_kafka import Producer
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
@@ -17,7 +19,8 @@ def load_data(table: str) -> pd.DataFrame:
     user = secrets['pg_user']
     password = secrets['pg_password']
     db = secrets['pg_db']
-    engine = create_engine(f'postgresql://{user}:{password}@database:5432/{db}')
+    host = 'database'
+    engine = create_engine(f'postgresql://{user}:{password}@{host}:5432/{db}')
 
     df = pd.read_sql_query(f'select * from {table}', con=engine)
     logger.debug(df.shape)
@@ -74,10 +77,19 @@ class LinregModel:
         self.model = pickle.load(open(path, 'rb'))
 
 
+def kafka_delivery_report(err, msg):
+    if err is not None:
+        print('Message delivery failed: {}'.format(err))
+    else:
+        print('Message delivered to {} [{}]'.format(msg.topic(), msg.partition()))
+
+
 if __name__ == '__main__':
+    logger.info('started')
     root = Path('.')
     cfg = Hparam(root / 'config.yaml')
 
+    logger.info('loading data')
     data = load_data(cfg.data.table)
     train, test = preprocess(data)
 
@@ -90,3 +102,20 @@ if __name__ == '__main__':
     metrics = model.metrics(preds, target)
     logger.info(metrics)
     model.save(root / cfg.model.path)
+
+    # predictions to kafka
+    host = 'kafka'
+    # create topic
+    os.system(f"kafka_2.13-3.4.0/bin/kafka-topics.sh --create --topic topic --bootstrap-server {host}:29092 --if-not-exists")
+
+    # write data
+    logger.info('sending to kafka')
+    p = Producer({'bootstrap.servers': f'{host}:29092'})
+    for pred, tgt in zip(preds, target):
+        p.poll(0)
+        msg = str(dict(predicted_price=pred, acutal_price=tgt, diff=round(tgt - pred, 1)))
+        p.produce('topic', msg.encode('utf-8'))
+    p.flush()
+
+    # consume messages
+    os.system(f"kafka_2.13-3.4.0/bin/kafka-console-consumer.sh --topic topic --from-beginning --bootstrap-server {host}:29092")
