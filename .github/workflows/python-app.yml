@@ -13,15 +13,25 @@ permissions:
   contents: read
 
 jobs:
-  build:
-
+  rundocker:
+    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/checkout@v2
+      - name: run-my-docker-compose
+        uses: isbang/compose-action@v0.1.1 
+        with: 
+         compose-file: 'docker-compose.yml'
+
+  job_docker_compose:
+    runs-on: ubuntu-latest
     steps:
     - name: Docker Compose Action
       uses: isbang/compose-action@v1.4.1
       with:
-        compose-file: "./docker-compose.yml"
+        compose-file: "docker-compose.yml"
         up-flags: "--build"
         services: |
           vault
